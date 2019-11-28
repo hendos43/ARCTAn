@@ -644,9 +644,6 @@ function drawbgLines(increment, lineColor) {
     rect(0, 0, width, 3 * height / 5);
     pop();
 
-
-
-
 }
 
 function addLine() {
@@ -728,6 +725,4 @@ async function mousePressed() {
     }
 }
 
-
 canvasSketch(sketch, settings);
-
