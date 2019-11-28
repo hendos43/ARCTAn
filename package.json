@@ -1,0 +1,27 @@
+{
+  "name": "20191104",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sketch.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@serialport/parser-readline": "^8.0.4",
+    "canvas-sketch": "^0.7.1",
+    "canvas-sketch-util": "^1.10.0",
+    "delaunay-triangulate": "^1.1.6",
+    "electron": "^7.1.1",
+    "electron-rebuild": "^1.8.6",
+    "nice-color-palettes": "^3.0.0",
+    "node": "^13.1.0",
+    "p5": "^0.10.2",
+    "riso-colors": "^1.0.1",
+    "serialport": "^8.0.5",
+    "tone": "^13.8.25",
+    "ws": "^7.2.0"
+  }
+}
