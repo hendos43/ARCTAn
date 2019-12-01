@@ -164,10 +164,7 @@ const sketch = ({ width, height }) => {
 
         individualPoints();
 
-
         // drawIndividualCircle(scale);
-
-
 
         drawRain(trebleScale, rainColor);
 
@@ -208,10 +205,6 @@ function individualPoints() {
         else if (j < 9) {
             getIndividualPoints(width * 5 / 6, height * 5 / 6, j, midScale);
         }
-
-        // getIndividualPoints(width * 2 / 3, height / 2);
-
-        //  console.log(circleCells[j]);
     }
 
     for (let j = 0; j < 9; j++) {
@@ -243,22 +236,12 @@ function getIndividualPoints(circleX, circleY, j, scale) {
 
     circleCells[j] = triangulate(circlePoints[j]);
 
-    // console.log(circleCells[j]);
-
 }
 
 function drawIndividualCircle(scale, fuck, j) {
 
-    // console.log(fuck);
-
-    // innerPoints = 100 * scale;
-    // outerPoints = 20 * scale;
-
-
     for (let i = 0; i < fuck.length; i++) {
         const cell = fuck[i];
-
-        // console.log(cell);
 
         const index0 = cell[0];
         const index1 = cell[1];
@@ -284,8 +267,6 @@ function drawIndividualCircle(scale, fuck, j) {
         );
 
     }
-
-    // console.log("complete");
 
 }
 
