@@ -73,22 +73,17 @@ let lineLimit = 500;
 
 let blobInterval;
 
-// var listOfColors = colors[random(0, colors.length)];
 var listOfColors = colors[Math.floor(Math.random() * colors.length)];
-
-// console.log(colors[0]);
-// console.log(colors.length);
-// console.log(listOfColors);
 
 let color1 = color(listOfColors[0]);
 let color2 = color(listOfColors[1]);
-// console.log(color1);
-// console.log(color2);
 
 let sidesColor;
 let rainColor;
 let lineColor;
 let haloColor;
+
+let scale, midScale, trebleScale;
 
 const settings = {
     p5: true,
@@ -99,7 +94,7 @@ const settings = {
 // Equivalent of p5 "Setup"
 const sketch = ({ width, height }) => {
 
-    innerPoints = 100;
+    innerPoints = 10;
     outerPoints = 20;
     circleRadius = 1000;
 
@@ -114,31 +109,17 @@ const sketch = ({ width, height }) => {
 
     });
 
-    // for (let i = 0; i < outerPoints; i++) {
-    //     [x, y] = coolRandom.onCircle(radius = circleRadius);
-    //     points.push([x + circleX, y + circleY]);
-    // }
-
-    // cells = triangulate(points);
-
-    // newPoints();
 
     for (let j = 0; j < 9; j++) {
         circlePoints[j] = new Array(innerPoints + outerPoints).fill(0).map(() => {
         });
 
-        // circleCells[j] = new Array(200).fill(0).map(() => {
-        // });
     }
 
 
 
     const changeInterval = 1000 / 30;
     individualPoints();
-
-    // setInterval(individualPoints, changeInterval);
-    // setInterval(addLine, 300);
-    // setInterval(addBlob, 600);
 
 
     // Equivalent of p5 "Draw" loop
@@ -157,9 +138,11 @@ const sketch = ({ width, height }) => {
         //isolate frequency for use in sketch
         const kick = analyser.getEnergy("bass");
         const treble = analyser.getEnergy("treble");
+        const mids = analyser.getEnergy("mid");
 
-        const scale = map(kick, -60, -30, 0.2, 1, true);
-        const trebleScale = map(treble, -100, -60, 0, 1, true);
+        scale = map(kick, -60, -30, 0.2, 1, true);
+        trebleScale = map(treble, -100, -60, 0.2, 1, true);
+        midScale = map(mids, -100, -30, 0.2, 1, true)
 
         drawbgLines(increment, lineColor);
 
@@ -173,20 +156,20 @@ const sketch = ({ width, height }) => {
 
         circleRadius = scale * (width / 2);
 
-        // drawHalo(circleRadius, scale);
+        drawHalo(circleRadius, scale);
 
         // drawCircle(scale);
 
         setGradient(0, 0, width, height, color1, color2, "Y");
 
-        individualPoints(scale);
+        individualPoints();
 
 
         // drawIndividualCircle(scale);
 
 
 
-        // drawRain(trebleScale, rainColor);
+        drawRain(trebleScale, rainColor);
 
         increment += mouseX / 10;
 
@@ -194,46 +177,37 @@ const sketch = ({ width, height }) => {
     };
 };
 
-function individualPoints(scale) {
+function individualPoints() {
     for (let j = 0; j < 9; j++) {
 
 
         if (j < 1) {
-            getIndividualPoints(width * 1 / 6, height * 1 / 6, j, scale);
+            getIndividualPoints(width * 1 / 6, height * 1 / 6, j, trebleScale);
         }
         else if (j < 2) {
-            getIndividualPoints(width * 3 / 6, height * 1 / 6, j, scale);
+            getIndividualPoints(width * 3 / 6, height * 1 / 6, j, trebleScale);
         }
         else if (j < 3) {
-            getIndividualPoints(width * 5 / 6, height * 1 / 6, j, scale);
-
+            getIndividualPoints(width * 5 / 6, height * 1 / 6, j, trebleScale);
         }
         else if (j < 4) {
             getIndividualPoints(width * 1 / 6, height * 3 / 6, j, scale);
         }
         else if (j < 5) {
             getIndividualPoints(width * 3 / 6, height * 3 / 6, j, scale);
-
         }
         else if (j < 6) {
             getIndividualPoints(width * 5 / 6, height * 3 / 6, j, scale);
         }
         else if (j < 7) {
-            getIndividualPoints(width * 1 / 6, height * 5 / 6, j, scale);
-
+            getIndividualPoints(width * 1 / 6, height * 5 / 6, j, midScale);
         }
         else if (j < 8) {
-            getIndividualPoints(width * 3 / 6, height * 5 / 6, j, scale);
+            getIndividualPoints(width * 3 / 6, height * 5 / 6, j, midScale);
         }
         else if (j < 9) {
-            getIndividualPoints(width * 5 / 6, height * 5 / 6, j, scale);
-
+            getIndividualPoints(width * 5 / 6, height * 5 / 6, j, midScale);
         }
-
-
-
-
-
 
         // getIndividualPoints(width * 2 / 3, height / 2);
 
@@ -251,6 +225,8 @@ function individualPoints(scale) {
 function getIndividualPoints(circleX, circleY, j, scale) {
 
     circleRadius = 2* scale * (width / 9);
+    innerPoints = 100;
+    outerPoints = 20;
 
 
     for (let i = 0; i < innerPoints; i++) {
@@ -275,8 +251,8 @@ function drawIndividualCircle(scale, fuck, j) {
 
     // console.log(fuck);
 
-    innerPoints = 100 * scale;
-    outerPoints = 20 * scale;
+    // innerPoints = 100 * scale;
+    // outerPoints = 20 * scale;
 
 
     for (let i = 0; i < fuck.length; i++) {
@@ -312,7 +288,6 @@ function drawIndividualCircle(scale, fuck, j) {
     // console.log("complete");
 
 }
-
 
 function newPoints() {
 
@@ -520,10 +495,13 @@ function drawHalo(circleRadius) {
 
     push();
     noStroke();
+
+blendMode(DIFFERENCE);
+
     haloColor = color(listOfColors[4]);
     haloColor.setAlpha(200 - (128 * sin(millis() / 1200)));
     fill(haloColor);
-    ellipse(width / 2, height * 2 / 5, circleRadius * 3, circleRadius * 3);
+    ellipse(width / 2, height / 2, circleRadius * 3, circleRadius * 3);
     pop();
 
 }
@@ -539,56 +517,6 @@ function drawbgLines(increment, lineColor) {
         pop();
 
     }
-
-
-    // for (let i = 0; i < numLines + 1; i++) {
-    //     push();
-    //     stroke("cyan");
-    //     line(width / 2, height / 2, i * width / numLines, 0);
-    //     pop();
-
-    // }
-
-
-    // for (let i = 0; i < numLines + 1; i++) {
-
-    //     let radius = 2000;
-    //     let angle = PI * (i / numLines);
-    //     let sx = width / 2;
-    //     let sy = height / 2;
-
-    //     let ex = sx + cos(angle) * radius;
-    //     let ey = sy + sin(angle) * radius;
-
-    //     push();
-    //     stroke("magenta");
-    //     strokeWeight(2);
-    //     line(sx, sy, ex, ey);
-    //     pop();
-
-
-    // }
-
-
-    // for (let i = 0; i < numLines + 1; i++) {
-
-    //     let radius = 2000;
-    //     let angle = TWO_PI * (i / numLines);
-    //     let sx = width / 2;
-    //     let sy = height / 2;
-
-    //     let ex = sx + cos(angle) * radius;
-    //     let ey = sy + sin(angle) * radius;
-
-    //     push();
-    //     stroke("cyan");
-    //     line(sx, sy, ex, ey);
-    //     pop();
-
-
-    // }
-
-
 
 
     //draw magenta horizontals
@@ -612,29 +540,6 @@ function drawbgLines(increment, lineColor) {
         //increment startxy using direction property
         mLine.startxy += pow(mLine.direction, 4 * mouseX / width);
     }
-
-
-    // //draw cyan horizontals
-    // for (let i = 0; i < cLines.length; i++) {
-    //     //create new line at current array pos
-    //     const cLine = cLines[i];
-    //     //delete oldest line when limit is reached
-    //     if (cLines.length > lineLimit) {
-    //         cLines.shift();
-    //     }
-    //     //delete current line if offscreen
-    //     if (cLine.startxy > height) {
-    //         cLines.splice(i, 1);
-    //     }
-    //     //draw line with startxy property
-    //     push();
-    //     stroke("cyan");
-    //     strokeWeight(4);
-    //     line(cLine.startxy, cLine.startxy, width - cLine.startxy, cLine.startxy);
-    //     pop();
-    //     //increment startxy using direction property
-    //     cLine.startxy -= pow(cLine.direction, 4 * mouseX / width);
-    // }
 
 
     push();
