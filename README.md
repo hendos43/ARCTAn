@@ -33,4 +33,6 @@
 
 ### Troubleshooting
 
-In Chrome, you may have to allow the ability to access to your microphone when connected to a locally hosted file. To do this, go to: [chrome://flags/#unsafely-treat-insecure-origin-as-secure](chrome://flags/#unsafely-treat-insecure-origin-as-secure) enable, and add the URL and port you are served by `canvas-sketch` into the box. You will need to restart Chrome.
+In Chrome, you may have to allow the ability to access to your microphone when connected to a locally hosted file. To do this, go to:
+`chrome://flags/#unsafely-treat-insecure-origin-as-secure`
+enable, and add the URL and port you are served by `canvas-sketch` into the box. You will need to restart Chrome.
