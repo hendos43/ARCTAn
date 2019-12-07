@@ -1,4 +1,5 @@
-# AudioBlobs
+# ARCTAn
+Audio Reactive Circles Triangulated with Arduino iNput
 
 ## Installation
 
@@ -12,18 +13,18 @@
 2. Upload the example code sketch `Smoothing.ino` from the `arduino` folder to any Arduino 
 3. Connect light sensor to A0 as shown below:
 
-![fritzing](https://github.com/hendos43/AudioBlobs/blob/master/arduino/LDR_Arduino_A0_10K.jpg)
+![fritzing](https://github.com/hendos43/ARCTAn/blob/master/arduino/LDR_Arduino_A0_10K.jpg)
 
 4. Make a note of which COM port your Arduino is connected to, and amend it in `server.js` on line 4. Information from the LDR will be communicated via Serial.
 5. Open a cmder window (or terminal on Mac) and navigate to the folder you unzipped in Step 1. e.g.:
 
-`cd C:\Users\Me\AudioBlobs`
+`cd C:\Users\Me\ARCTAn`
 
 6. Run an electron server to collect the serial data and pass it to `sketch.js` by running:
 
 `npx electron server.js`
 
-7. Open a new terminal window and navigate again to the AudioBlobs folder
+7. Open a new terminal window and navigate again to the ARCTAn folder
 8. Now you can run the sketch using:
 
 `canvas-sketch sketch.js`
