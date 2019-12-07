@@ -1,7 +1,8 @@
 const HOST = '10.97.5.172';
 const PORT = 32045;
 
-let lightLevel;
+// Create variable to collect sensor data from Arduino
+let sensorLevel;
 
 // Create a new websocket
 const socket = new window.WebSocket("ws://" + HOST + ":" + PORT);
@@ -9,8 +10,7 @@ const socket = new window.WebSocket("ws://" + HOST + ":" + PORT);
 socket.onmessage = message => {
     try {
         data = JSON.parse(message.data);
-        lightLevel = data.data;
-        // console.log(lightLevel);
+        sensorLevel = data.data;
     } catch (err) {
         console.error(err);
     }
@@ -22,48 +22,42 @@ socket.onclose = () => {
 
 console.log(socket);
 
+// assemble prerequisites
 const canvasSketch = require("canvas-sketch");
 const triangulate = require("delaunay-triangulate");
-
-const risoColors = require("riso-colors");
 var colors = require('nice-color-palettes')
-
 const Tone = require("tone");
 const AudioEnergy = require("./AudioEnergy");
 const coolRandom = require("canvas-sketch-util/random");
-
 const p5 = require("p5");
 
 new p5();
 
+// Set variables for AudioEnergy.js
 let mic, analyser;
 
+// variables for circles/points to construct circles
 let points;
-
 let innerPoints, outerPoints;
-
 let circleRadius;
 let circleX, circleY;
-
 let fillColor;
-
-let xoff;
 
 let cells;
 let circleCells = [];
 
-let pg;
-
-let xy;
+// for radius of mask
+let r;
 
 let increment = 10;
 
 let cyanlines = new Array(100);
 
+// arrays to contain moving gridlines
 let mLines = [];
-
 let cLines = [];
 
+// arrays to contain moving bars
 let lblobs = [];
 let rblobs = [];
 
@@ -71,10 +65,11 @@ let circlePoints = [];
 
 let lineLimit = 500;
 
-let blobInterval;
+// set Interval for moving bar generation
+let barInterval = 1000 / 3;
 
+// initialise colour pallette
 var listOfColors = colors[Math.floor(Math.random() * colors.length)];
-
 let color1 = color(listOfColors[0]);
 let color2 = color(listOfColors[1]);
 
@@ -83,7 +78,10 @@ let rainColor;
 let lineColor;
 let haloColor;
 
-let scale, midScale, trebleScale;
+// variables for globally transmitting AudioEnergy of various freqs
+let scale, midScale, trebleScale, highMidScale, lowMidScale;
+
+let silence, previousSilence;
 
 const settings = {
     p5: true,
@@ -102,6 +100,12 @@ const sketch = ({ width, height }) => {
     rainColor = color(random(listOfColors));
     lineColor = color(random(listOfColors));
 
+    push();
+    textSize(1000);
+    textAlign(CENTER);
+    text("CLICK", mouseX, mouseY);
+    pop();
+
     points = new Array(innerPoints + outerPoints).fill(0).map(() => {
         // // return [Math.random() * width, Math.random() * height];
         // [x, y] = coolRandom.insideCircle(radius = circleRadius);
@@ -116,16 +120,23 @@ const sketch = ({ width, height }) => {
 
     }
 
-
-
-    const changeInterval = 1000 / 30;
     individualPoints();
-
+    setInterval(addBar, barInterval);
+    setInterval(checkSilence, 1000);
+    setInterval(enumeratePoints, 1000);
+    setInterval(addLine, 1000/3);
 
     // Equivalent of p5 "Draw" loop
     return ({ context, width, height }) => {
 
         if (!analyser) {
+
+            push();
+            textSize(1000);
+            textAlign(CENTER);
+            stroke(255);
+            text("CLICK", mouseX, mouseY);
+            pop();
 
             return;
         }
@@ -139,77 +150,119 @@ const sketch = ({ width, height }) => {
         const kick = analyser.getEnergy("bass");
         const treble = analyser.getEnergy("treble");
         const mids = analyser.getEnergy("mid");
+        const highMid = analyser.getEnergy("highMid");
+        const lowMid = analyser.getEnergy("lowMid");
 
-        scale = map(kick, -60, -30, 0.2, 1, true);
-        trebleScale = map(treble, -100, -60, 0.2, 1, true);
-        midScale = map(mids, -100, -30, 0.2, 1, true)
+        //remap to 0-1
+        scale = map(kick, -60, -30, 0.1, 1, true);
+        trebleScale = map(treble, -100, -60, 0.1, 1, true);
+        midScale = map(mids, -100, -30, 0.1, 1, true);
+        highMidScale = map(highMid, -100, -30, 0.1, 1, true);
+        lowMidScale = map(lowMid, -100, -30, 0.1, 1, true);
 
         drawbgLines(increment, lineColor);
 
-        // setGradient(0, 0, width, 3 * height / 5, color1, color2, "Y");
+        drawBar();
 
-        // drawSides(scale, sidesColor);
-
-        // drawHills();
-
-        // drawBlobs();
-
-        circleRadius = scale * (width / 2);
+        circleRadius = scale * (width / 3);
 
         drawHalo(circleRadius, scale);
-
-        // drawCircle(scale);
 
         setGradient(0, 0, width, height, color1, color2, "Y");
 
         individualPoints();
 
-        // drawIndividualCircle(scale);
-
-        drawRain(trebleScale, rainColor);
-
         increment += mouseX / 10;
 
+        drawFrame();
+
+        drawRain(trebleScale, rainColor);
 
     };
 };
 
+// --------------------- //
+// FUNCTION DECLARATIONS //
+// --------------------- //
+
+function enumeratePoints() {
+
+    innerPoints = random(100, 200);
+    outerPoints = random(3, 200);
+
+}
+
+function checkSilence() {
+
+    if (midScale == 0.1) {
+        silence = true;
+    }
+    else {
+        silence = false;
+    }
+
+    if (previousSilence == true && silence == true) {
+
+        //change pallette
+        listOfColors = colors[Math.floor(Math.random() * colors.length)];
+        color1 = color(listOfColors[0]);
+        color2 = color(listOfColors[1]);
+
+        sidesColor = color(random(listOfColors));
+        rainColor = color(random(listOfColors));
+        lineColor = color(random(listOfColors));
+
+    }
+
+    if (silence == true) {
+        previousSilence = true;
+    }
+    else {
+        previousSilence = false;
+    }
+
+}
+
 function individualPoints() {
     for (let j = 0; j < 9; j++) {
 
-
         if (j < 1) {
-            getIndividualPoints(width * 1 / 6, height * 1 / 6, j, trebleScale);
+            getIndividualPoints(width * 2 / 6, height * 1 / 6, j, midScale);
         }
         else if (j < 2) {
             getIndividualPoints(width * 3 / 6, height * 1 / 6, j, trebleScale);
         }
         else if (j < 3) {
-            getIndividualPoints(width * 5 / 6, height * 1 / 6, j, trebleScale);
+            getIndividualPoints(width * 4 / 6, height * 1 / 6, j, trebleScale);
         }
         else if (j < 4) {
-            getIndividualPoints(width * 1 / 6, height * 3 / 6, j, scale);
+            getIndividualPoints(width * 1 / 6, height * 3 / 6, j, highMidScale);
         }
         else if (j < 5) {
             getIndividualPoints(width * 3 / 6, height * 3 / 6, j, scale);
         }
         else if (j < 6) {
-            getIndividualPoints(width * 5 / 6, height * 3 / 6, j, scale);
+            getIndividualPoints(width * 5 / 6, height * 3 / 6, j, highMidScale);
         }
         else if (j < 7) {
-            getIndividualPoints(width * 1 / 6, height * 5 / 6, j, midScale);
+            getIndividualPoints(width * 2 / 6, height * 5 / 6, j, trebleScale);
         }
         else if (j < 8) {
-            getIndividualPoints(width * 3 / 6, height * 5 / 6, j, midScale);
+            getIndividualPoints(width * 3 / 6, height * 5 / 6, j, trebleScale);
         }
         else if (j < 9) {
-            getIndividualPoints(width * 5 / 6, height * 5 / 6, j, midScale);
+            getIndividualPoints(width * 4 / 6, height * 5 / 6, j, midScale);
         }
     }
 
     for (let j = 0; j < 9; j++) {
 
-        drawIndividualCircle(scale, circleCells[j], j);
+        if (j == 1 || j == 7) {
+            // console.log(j);
+        }
+        else {
+            drawIndividualCircle(scale, circleCells[j], j);
+        }
     }
 
 
@@ -217,10 +270,9 @@ function individualPoints() {
 
 function getIndividualPoints(circleX, circleY, j, scale) {
 
-    circleRadius = 2* scale * (width / 9);
-    innerPoints = 100;
-    outerPoints = 20;
-
+    circleRadius = 2 * scale * (width / 12);
+    // innerPoints = 100;
+    // outerPoints = 200;
 
     for (let i = 0; i < innerPoints; i++) {
         circlePoints[j].shift();
@@ -300,7 +352,6 @@ function drawCircle(scale) {
     innerPoints = 100 * scale;
     outerPoints = 20 * scale;
 
-
     for (let i = 0; i < cells.length; i++) {
         const cell = cells[i];
         const index0 = cell[0];
@@ -314,7 +365,6 @@ function drawCircle(scale) {
         stroke("black");
         strokeWeight(1);
 
-
         fillColor = random(listOfColors);
         fill(fillColor);
 
@@ -327,52 +377,10 @@ function drawCircle(scale) {
             point2[1]
         );
 
-
-
     }
-
-
 }
 
-function drawHills() {
-
-    push();
-    noStroke();
-    fill(color2);
-
-    ellipse(width, height * 3 / 5, width * 4 / 5, width * 3 / 5);
-    ellipse(0, height * 3 / 5, width * 4 / 5, width * 3 / 5);
-
-    pop();
-}
-
-function drawSides(scale, sidesColor) {
-
-    push();
-    fill(sidesColor);
-    noStroke();
-
-    // blendMode(DIFFERENCE);
-
-    beginShape();
-    vertex(width, 0 + 400 - (scale * 200));
-    vertex(width, height * 3 / 5);
-    vertex(width * 4 / 5, (height * 3 / 5));
-    // vertex(width * 3 / 5, (height * 3 / 9) + 400 - (scale * 200));
-    endShape();
-
-    beginShape();
-    vertex(0, 0 + 400 - (scale * 200));
-    vertex(0, height * 3 / 5);
-    vertex(width * 1 / 5, height * 3 / 5);
-    // vertex(width * 2 / 5, height * 3 / 9 + 400 - (scale*200));
-    endShape();
-
-    pop();
-
-}
-
-function addBlob() {
+function addBar() {
 
     // let y = random(height * 1 / 3, height * 2 / 3);
     let y = height * 1 / 2;
@@ -401,7 +409,7 @@ function addBlob() {
 
 }
 
-function drawBlobs() {
+function drawBar() {
 
     //draw blobs
     for (let i = 0; i < rblobs.length; i++) {
@@ -477,7 +485,7 @@ function drawHalo(circleRadius) {
     push();
     noStroke();
 
-blendMode(DIFFERENCE);
+    blendMode(DIFFERENCE);
 
     haloColor = color(listOfColors[4]);
     haloColor.setAlpha(200 - (128 * sin(millis() / 1200)));
@@ -500,7 +508,7 @@ function drawbgLines(increment, lineColor) {
     }
 
 
-    //draw magenta horizontals
+    //draw horizontals
     for (let i = 0; i < mLines.length; i++) {
         //create new line at current array pos
         const mLine = mLines[i];
@@ -552,6 +560,31 @@ function addLine() {
 
 }
 
+function drawFrame() {
+
+    push();
+    fill(0);
+    beginShape();
+    vertex(0, 0);
+    vertex(width, 0);
+    vertex(width, height);
+    vertex(0, height);
+
+    beginContour();
+    r = map(mouseX, 0, width, 0, width / 2);
+
+    let N = 500;
+    for (var i = 0; i <= N; i++) {
+        vertex(r * cos(-i * 2 * PI / N) + width / 2, r * sin(-i * 2 * PI / N) + height / 2);
+    }
+    endContour();
+
+    endShape();
+    pop();
+
+
+}
+
 function setGradient(x, y, w, h, c1, c2, axis) {
     noFill();
     if (axis == "Y") {  // Top to bottom gradient
@@ -572,8 +605,46 @@ function setGradient(x, y, w, h, c1, c2, axis) {
     }
 }
 
+function drawHills() {
+
+    push();
+    noStroke();
+    fill(color2);
+
+    ellipse(width, height * 3 / 5, width * 4 / 5, width * 3 / 5);
+    ellipse(0, height * 3 / 5, width * 4 / 5, width * 3 / 5);
+
+    pop();
+}
+
+function drawSides(scale, sidesColor) {
+
+    push();
+    fill(sidesColor);
+    noStroke();
+
+    // blendMode(DIFFERENCE);
+
+    beginShape();
+    vertex(width, 0 + 400 - (scale * 200));
+    vertex(width, height * 3 / 5);
+    vertex(width * 4 / 5, (height * 3 / 5));
+    // vertex(width * 3 / 5, (height * 3 / 9) + 400 - (scale * 200));
+    endShape();
+
+    beginShape();
+    vertex(0, 0 + 400 - (scale * 200));
+    vertex(0, height * 3 / 5);
+    vertex(width * 1 / 5, height * 3 / 5);
+    // vertex(width * 2 / 5, height * 3 / 9 + 400 - (scale*200));
+    endShape();
+
+    pop();
+
+}
+
 window.mousePressed = mousePressed;
-async function mousePressed() {
+function mousePressed() {
 
     console.log("hello");
 
@@ -582,11 +653,11 @@ async function mousePressed() {
         console.log("Disposing of Mic:", mic.label);
 
 
-        push();
-        rectMode(CENTER);
-        fill("white");
-        rect(width / 2, height / 2, 100, 100);
-        pop();
+        // push();
+        // rectMode(CENTER);
+        // fill("white");
+        // rect(width / 2, height / 2, 100, 100);
+        // pop();
 
         // stop recording
         mic.dispose();
@@ -597,11 +668,12 @@ async function mousePressed() {
         mic = new Tone.UserMedia();
 
         // open it asks for user permission
-        await mic.open();
+        mic.open();
 
         console.log("Opened Microphone:", mic.label);
         // Create an analyser node 
         analyser = new AudioEnergy();
+        analyser.smoothing = 0.4;
 
         // Connect with analyser as well so we can detect waveform
         mic.connect(analyser);
