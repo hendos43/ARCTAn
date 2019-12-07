@@ -124,7 +124,7 @@ const sketch = ({ width, height }) => {
     setInterval(addBar, barInterval);
     setInterval(checkSilence, 1000);
     setInterval(enumeratePoints, 1000);
-    setInterval(addLine, 1000/3);
+    setInterval(addLine, 1000 / 3);
 
     // Equivalent of p5 "Draw" loop
     return ({ context, width, height }) => {
@@ -526,8 +526,14 @@ function drawbgLines(increment, lineColor) {
         strokeWeight(4);
         line(mLine.startxy, mLine.startxy, width - mLine.startxy, mLine.startxy);
         pop();
-        //increment startxy using direction property
-        mLine.startxy += pow(mLine.direction, 4 * mouseX / width);
+        //increment startxy using direction property, use mouseX if Arduino not connected
+        if (sensorLevel != null) {
+            mLine.startxy += pow(mLine.direction, 4 * sensorLevel / width);
+        }
+        else {
+            mLine.startxy += pow(mLine.direction, 4 * mouseX / width);
+        }
+
     }
 
 
@@ -571,9 +577,18 @@ function drawFrame() {
     vertex(0, height);
 
     beginContour();
-    r = map(mouseX, 0, width, 0, width / 2);
 
-    let N = 500;
+    // use sensor data from arduino to define contour (hole) size unless disconnected
+    if (sensorLevel != null) {
+        r = map(sensorLevel, 0, 1023, 0, width / 2);
+        sf = map(sensorLevel, 0, 1023, 3, 30, true);
+    }
+    else {
+        r = map(mouseX, 0, width, 0, width / 2);
+        sf = map(mouseX, 0, width, 3, 30, true);
+    }
+
+    let N = sf;
     for (var i = 0; i <= N; i++) {
         vertex(r * cos(-i * 2 * PI / N) + width / 2, r * sin(-i * 2 * PI / N) + height / 2);
     }
