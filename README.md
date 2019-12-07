@@ -30,3 +30,7 @@
 
 9. Copy the link given to you in cmder by canvas-sketch and paste into your web browser, complete with the port. Click to allow access to the computer's microphone which can be set in the ordinary way to external soundcard/line-in/stereo mix (for example) to collect audio to drive the sketch.
 10. Keep on rockin' in the free world
+
+### Troubleshooting
+
+In Chrome, you may have to allow the ability to access to your microphone when connected to a locally hosted file. To do this, go to: [chrome://flags/#unsafely-treat-insecure-origin-as-secure](chrome://flags/#unsafely-treat-insecure-origin-as-secure) enable, and add the URL and port you are served by `canvas-sketch` into the box. You will need to restart Chrome.
