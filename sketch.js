@@ -226,32 +226,62 @@ function checkSilence() {
 function individualPoints() {
     for (let j = 0; j < 9; j++) {
 
+        let cx = width / 2;
+        let cy = height / 2;
+        let ringRadius = width / 3;
+        let df = 10000;
+        let offset = (TWO_PI / 6) * df;
+     
+
         if (j < 1) {
-            getIndividualPoints(width * 2 / 6, height * 1 / 6, j, midScale);
+            // original (static) for backup
+            // getIndividualPoints(width * 2 / 6, height * 1 / 6, j, midScale);
+
+            let a = (millis() + (offset * 0)) / df % TWO_PI;
+            x = cx + cos(a) * ringRadius;
+            y = cy + sin(a) * ringRadius;
+            getIndividualPoints(x, y, j, midScale);
+
         }
         else if (j < 2) {
             getIndividualPoints(width * 3 / 6, height * 1 / 6, j, trebleScale);
         }
         else if (j < 3) {
-            getIndividualPoints(width * 4 / 6, height * 1 / 6, j, trebleScale);
+            let a = (millis() + offset * 1) / df % TWO_PI;
+            x = cx + cos(a) * ringRadius;
+            y = cy + sin(a) * ringRadius;
+            getIndividualPoints(x, y, j, midScale);
         }
         else if (j < 4) {
-            getIndividualPoints(width * 1 / 6, height * 3 / 6, j, highMidScale);
+            let a = (millis() + offset * 2) / df % TWO_PI;
+            x = cx + cos(a) * ringRadius;
+            y = cy + sin(a) * ringRadius;
+            getIndividualPoints(x, y, j, highMidScale);
         }
         else if (j < 5) {
+            //CENTRAL STATIC
             getIndividualPoints(width * 3 / 6, height * 3 / 6, j, scale);
         }
         else if (j < 6) {
-            getIndividualPoints(width * 5 / 6, height * 3 / 6, j, highMidScale);
+            let a = (millis() + offset * 3) / df % TWO_PI;
+            x = cx + cos(a) * ringRadius;
+            y = cy + sin(a) * ringRadius;
+            getIndividualPoints(x, y, j, highMidScale);
         }
         else if (j < 7) {
-            getIndividualPoints(width * 2 / 6, height * 5 / 6, j, trebleScale);
+            let a = (millis() + offset * 4) / df % TWO_PI;
+            x = cx + cos(a) * ringRadius;
+            y = cy + sin(a) * ringRadius;
+            getIndividualPoints(x, y, j, trebleScale);
         }
         else if (j < 8) {
             getIndividualPoints(width * 3 / 6, height * 5 / 6, j, trebleScale);
         }
         else if (j < 9) {
-            getIndividualPoints(width * 4 / 6, height * 5 / 6, j, midScale);
+            let a = (millis() + offset * 5) / df % TWO_PI;
+            x = cx + cos(a) * ringRadius;
+            y = cy + sin(a) * ringRadius;
+            getIndividualPoints(x, y, j, midScale);
         }
     }
 
@@ -290,10 +320,10 @@ function getIndividualPoints(circleX, circleY, j, scale) {
 
 }
 
-function drawIndividualCircle(scale, fuck, j) {
+function drawIndividualCircle(scale, arrayData, j) {
 
-    for (let i = 0; i < fuck.length; i++) {
-        const cell = fuck[i];
+    for (let i = 0; i < arrayData.length; i++) {
+        const cell = arrayData[i];
 
         const index0 = cell[0];
         const index1 = cell[1];
