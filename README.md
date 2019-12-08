@@ -8,6 +8,7 @@ Audio Reactive Circles Triangulated with Arduino iNput
 1. You will need to use electron and canvas-sketch for this code to work
 2. You will also have the Arduino IDE installed or some way to upload code to the Arduino which will feed the sketch sensor data
 3. You will need node/npm and to use either cmder (or another terminal emulator), or terminal
+4. Visual Studio (for electron)
 
 ### Setup
 1. Download the project and unzip
