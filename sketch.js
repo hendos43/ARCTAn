@@ -11,7 +11,7 @@ socket.onmessage = message => {
     try {
         data = JSON.parse(message.data);
         sensorLevel = data.data;
-        
+
     } catch (err) {
         console.error(err);
     }
@@ -640,9 +640,9 @@ function drawFrame() {
 
     // use sensor data from arduino to define contour (hole) size unless disconnected
     if (sensorLevel != null) {
-        r = map(sensorLevel, 1023, maxSensor, 0, width / 2, true);
-        sf = map(sensorLevel, 1023, maxSensor, 3, 13, true);
-        console.log(sensorLevel);
+        r = map(sensorLevel, 0, maxLevel, 0, width / 2, true);
+        sf = map(sensorLevel, 0, maxLevel, 3, 13, true);
+        // console.log(sensorLevel);
     }
     else {
         r = map(mouseX, 0, width, 0, width / 2);
