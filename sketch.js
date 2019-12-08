@@ -1,5 +1,5 @@
-const HOST = '10.97.5.172';
-const PORT = 32045;
+const HOST = 'localhost';
+const PORT = 42069;
 
 // Create variable to collect sensor data from Arduino
 let sensorLevel;
@@ -11,6 +11,7 @@ socket.onmessage = message => {
     try {
         data = JSON.parse(message.data);
         sensorLevel = data.data;
+        
     } catch (err) {
         console.error(err);
     }
@@ -83,6 +84,15 @@ let scale, midScale, trebleScale, highMidScale, lowMidScale;
 
 let silence, previousSilence;
 
+//toggle state for displaying helper text
+let helpText = 1;
+
+// default blend mode for mask
+let crazyFrame = 0;
+
+// initialise sensor peak at initial sensor level
+let maxSensor;
+
 const settings = {
     p5: true,
     dimensions: [2048, 2048],
@@ -100,11 +110,18 @@ const sketch = ({ width, height }) => {
     rainColor = color(random(listOfColors));
     lineColor = color(random(listOfColors));
 
+    background(0);
+    fill(color(listOfColors[0]));
+    ellipse(width / 2, height / 2, width);
+
     push();
-    textSize(1000);
+    textSize(width / 6);
     textAlign(CENTER);
-    text("CLICK", mouseX, mouseY);
+    fill(color(listOfColors[1]));
+    text("ARCTAn", width / 2, height - 60);
     pop();
+
+    drawHelperText();
 
     points = new Array(innerPoints + outerPoints).fill(0).map(() => {
         // // return [Math.random() * width, Math.random() * height];
@@ -122,7 +139,7 @@ const sketch = ({ width, height }) => {
 
     individualPoints();
     setInterval(addBar, barInterval);
-    setInterval(checkSilence, 1000);
+    setInterval(checkSilence, 500);
     setInterval(enumeratePoints, 1000);
     setInterval(addLine, 1000 / 3);
 
@@ -130,13 +147,6 @@ const sketch = ({ width, height }) => {
     return ({ context, width, height }) => {
 
         if (!analyser) {
-
-            push();
-            textSize(1000);
-            textAlign(CENTER);
-            stroke(255);
-            text("CLICK", mouseX, mouseY);
-            pop();
 
             return;
         }
@@ -174,9 +184,13 @@ const sketch = ({ width, height }) => {
 
         increment += mouseX / 10;
 
+        drawRain(trebleScale, rainColor);
+
         drawFrame();
 
-        drawRain(trebleScale, rainColor);
+        if (helpText == 1) {
+            drawHelperText();
+        }
 
     };
 };
@@ -203,14 +217,7 @@ function checkSilence() {
 
     if (previousSilence == true && silence == true) {
 
-        //change pallette
-        listOfColors = colors[Math.floor(Math.random() * colors.length)];
-        color1 = color(listOfColors[0]);
-        color2 = color(listOfColors[1]);
-
-        sidesColor = color(random(listOfColors));
-        rainColor = color(random(listOfColors));
-        lineColor = color(random(listOfColors));
+        changePallette();
 
     }
 
@@ -223,6 +230,18 @@ function checkSilence() {
 
 }
 
+function changePallette() {
+    //change pallette
+    listOfColors = colors[Math.floor(Math.random() * colors.length)];
+    color1 = color(listOfColors[0]);
+    color2 = color(listOfColors[1]);
+
+    sidesColor = color(random(listOfColors));
+    rainColor = color(random(listOfColors));
+    lineColor = color(random(listOfColors));
+
+}
+
 function individualPoints() {
     for (let j = 0; j < 9; j++) {
 
@@ -231,7 +250,7 @@ function individualPoints() {
         let ringRadius = width / 3;
         let df = 10000;
         let offset = (TWO_PI / 6) * df;
-     
+
 
         if (j < 1) {
             // original (static) for backup
@@ -244,19 +263,20 @@ function individualPoints() {
 
         }
         else if (j < 2) {
+            // generated but not used
             getIndividualPoints(width * 3 / 6, height * 1 / 6, j, trebleScale);
         }
         else if (j < 3) {
             let a = (millis() + offset * 1) / df % TWO_PI;
             x = cx + cos(a) * ringRadius;
             y = cy + sin(a) * ringRadius;
-            getIndividualPoints(x, y, j, midScale);
+            getIndividualPoints(x, y, j, highMidScale);
         }
         else if (j < 4) {
             let a = (millis() + offset * 2) / df % TWO_PI;
             x = cx + cos(a) * ringRadius;
             y = cy + sin(a) * ringRadius;
-            getIndividualPoints(x, y, j, highMidScale);
+            getIndividualPoints(x, y, j, trebleScale);
         }
         else if (j < 5) {
             //CENTRAL STATIC
@@ -266,22 +286,23 @@ function individualPoints() {
             let a = (millis() + offset * 3) / df % TWO_PI;
             x = cx + cos(a) * ringRadius;
             y = cy + sin(a) * ringRadius;
-            getIndividualPoints(x, y, j, highMidScale);
+            getIndividualPoints(x, y, j, midScale);
         }
         else if (j < 7) {
             let a = (millis() + offset * 4) / df % TWO_PI;
             x = cx + cos(a) * ringRadius;
             y = cy + sin(a) * ringRadius;
-            getIndividualPoints(x, y, j, trebleScale);
+            getIndividualPoints(x, y, j, highMidScale);
         }
         else if (j < 8) {
+            //generated but not used
             getIndividualPoints(width * 3 / 6, height * 5 / 6, j, trebleScale);
         }
         else if (j < 9) {
             let a = (millis() + offset * 5) / df % TWO_PI;
             x = cx + cos(a) * ringRadius;
             y = cy + sin(a) * ringRadius;
-            getIndividualPoints(x, y, j, midScale);
+            getIndividualPoints(x, y, j, trebleScale);
         }
     }
 
@@ -558,7 +579,7 @@ function drawbgLines(increment, lineColor) {
         pop();
         //increment startxy using direction property, use mouseX if Arduino not connected
         if (sensorLevel != null) {
-            mLine.startxy += pow(mLine.direction, 4 * sensorLevel / width);
+            mLine.startxy += pow(mLine.direction, 4 * sensorLevel / 1023);
         }
         else {
             mLine.startxy += pow(mLine.direction, 4 * mouseX / width);
@@ -599,7 +620,16 @@ function addLine() {
 function drawFrame() {
 
     push();
-    fill(0);
+
+    noStroke();
+    if (crazyFrame == 0) {
+        blendMode(BLEND);
+        fill(0);
+    }
+    else {
+        blendMode(DIFFERENCE);
+        fill(255);
+    }
     beginShape();
     vertex(0, 0);
     vertex(width, 0);
@@ -610,12 +640,13 @@ function drawFrame() {
 
     // use sensor data from arduino to define contour (hole) size unless disconnected
     if (sensorLevel != null) {
-        r = map(sensorLevel, 0, 1023, 0, width / 2);
-        sf = map(sensorLevel, 0, 1023, 3, 30, true);
+        r = map(sensorLevel, 1023, maxSensor, 0, width / 2, true);
+        sf = map(sensorLevel, 1023, maxSensor, 3, 13, true);
+        console.log(sensorLevel);
     }
     else {
         r = map(mouseX, 0, width, 0, width / 2);
-        sf = map(mouseX, 0, width, 3, 30, true);
+        sf = map(mouseX, 0, width, 3, 18, true);
     }
 
     let N = sf;
@@ -688,10 +719,23 @@ function drawSides(scale, sidesColor) {
 
 }
 
+function drawHelperText() {
+
+    push();
+    blendMode(DIFFERENCE);
+    fill(255);
+    textAlign(CENTER);
+    textSize(20);
+    let s1 = "click: enable/disable mic | h: show/hide help | →: change pallette | f: frame mode | © Stephen Henderson 2019";
+    text(s1, width / 2, height - 20);
+    pop();
+
+}
+
 window.mousePressed = mousePressed;
 function mousePressed() {
 
-    console.log("hello");
+    // console.log("hello");
 
     if (mic) {
 
@@ -709,13 +753,19 @@ function mousePressed() {
         // Clear mic so we can create another on next click
         mic = null;
     } else {
+        Tone.start();
+
+
+        maxSensor = sensorLevel;
+
+
         // Create a new mic
         mic = new Tone.UserMedia();
+
 
         // open it asks for user permission
         mic.open();
 
-        console.log("Opened Microphone:", mic.label);
         // Create an analyser node 
         analyser = new AudioEnergy();
         analyser.smoothing = 0.4;
@@ -725,7 +775,42 @@ function mousePressed() {
         // optionally connect to the master to hear audio input
         // mic.connect(Tone.Master);
 
+        console.log("Opened Microphone");
+
+
     }
+}
+
+window.keyPressed = keyPressed;
+function keyPressed() {
+
+    if (keyCode === RIGHT_ARROW) {
+        changePallette();
+    }
+
+}
+
+window.keyTyped = keyTyped;
+function keyTyped() {
+
+    if (key === 'h') {
+        if (helpText == 0) {
+            helpText = 1;
+        }
+        else {
+            helpText = 0;
+        }
+    }
+
+    if (key === 'f') {
+        if (crazyFrame == 0) {
+            crazyFrame = 1;
+        }
+        else {
+            crazyFrame = 0;
+        }
+    }
+
 }
 
 canvasSketch(sketch, settings);
