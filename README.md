@@ -1,6 +1,9 @@
 # ARCTAn
 Audio Reactive Circles Triangulated with Arduino iNput
 
+### Warning: Messy and unmaintained
+
+
 ## Installation
 
 ### Prerequisites
